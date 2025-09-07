@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/design-sight
+      - HF_API_KEY=${HF_API_KEY}
+    depends_on:
+      - mongo
+      - vision-microservice
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  vision-microservice:
+    build: ./vision-microservice
+    ports:
+      - "8001:8001"
+    environment:
+      - HF_API_KEY=${HF_API_KEY}
+      - DINO_MODEL=IDEA-Research/groundingdino
+      - BLIP_MODEL=Salesforce/blip2-opt-2.7b
+
+volumes:
+  mongo-data:
