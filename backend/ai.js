@@ -1,15 +1,24 @@
 const axios = require('axios');
 const FormData = require('form-data');
-const fs = require('fs');
+// const fs = require('fs'); // No longer needed for local file reading
 
-const analyzeImage = async (imagePath) => {
+const analyzeImage = async (imageUrl) => { // Renamed imagePath to imageUrl for clarity
   try {
+    // Fetch image data from S3 URL
+    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const imageBuffer = Buffer.from(imageResponse.data);
+    const imageMimeType = imageResponse.headers['content-type'];
+
     const form = new FormData();
-    form.append('file', fs.createReadStream(imagePath));
+    form.append('file', imageBuffer, {
+      filename: imageUrl.substring(imageUrl.lastIndexOf('/') + 1), // Extract filename from URL
+      contentType: imageMimeType,
+    });
 
     const response = await axios.post('http://vision-microservice:8001/analyze-image/', form, {
       headers: {
         ...form.getHeaders(),
+        'Content-Type': form.getHeaders()['content-type'], // Ensure correct Content-Type for FormData
       },
     });
 
@@ -22,5 +31,7 @@ const analyzeImage = async (imagePath) => {
     throw new Error('Failed to analyze image');
   }
 };
+
+module.exports = { analyzeImage };
 
 module.exports = { analyzeImage };

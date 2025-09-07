@@ -5,18 +5,10 @@ const Project = require('../models/Project');
 const Image = require('../models/Image');
 const Feedback = require('../models/Feedback');
 const { analyzeImage } = require('../ai');
+const { uploadFileToS3 } = require('../s3Service'); // Import S3 service
 
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-
-const upload = multer({ storage });
+// Multer setup for file uploads - using memory storage for S3 upload
+const upload = multer({ storage: multer.memoryStorage() });
 
 // @route   GET /api/projects
 // @desc    Get all projects
@@ -72,12 +64,13 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    const { filename, path, originalname } = req.file;
+    // Upload image to S3
+    const s3Url = await uploadFileToS3(req.file);
 
     const newImage = new Image({
-      filename,
-      path,
-      originalName: originalname,
+      filename: req.file.originalname, // Use originalname as filename
+      path: s3Url, // Store S3 URL as path
+      originalName: req.file.originalname,
       project: project._id,
     });
 
@@ -86,7 +79,7 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
     project.images.push(savedImage._id);
     await project.save();
 
-    // Trigger AI analysis
+    // Trigger AI analysis (savedImage.path now contains S3 URL)
     const feedbackItems = await analyzeImage(savedImage.path);
 
     const feedbackToSave = feedbackItems.map((item) => ({
@@ -102,6 +95,7 @@ router.post('/:id/images', upload.single('image'), async (req, res) => {
 
     res.status(201).json(savedImage);
   } catch (err) {
+    console.error('Error uploading image or processing feedback:', err);
     res.status(500).json({ message: err.message });
   }
 });

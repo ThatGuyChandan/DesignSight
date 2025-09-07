@@ -50,7 +50,7 @@ const ProjectView = () => {
       <div className="image-gallery">
         {project.images.map((image) => (
           <div key={image._id} className="image-card">
-            <img src={`http://localhost:5000/${image.path}`} alt={image.originalName} className="project-image" />
+            <img src={image.path} alt={image.originalName} className="project-image" />
             <FeedbackOverlay feedback={image.feedback} role={selectedRole} />
           </div>
         ))}

@@ -17,7 +17,7 @@ connection.once('open', () => {
   console.log('MongoDB database connection established successfully');
 });
 
-app.use('/uploads', express.static('uploads'));
+// app.use('/uploads', express.static('uploads')); // Removed as images will be served from S3
 
 const projectsRouter = require('./routes/projects');
 app.use('/api/projects', projectsRouter);
