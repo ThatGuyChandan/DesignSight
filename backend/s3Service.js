@@ -13,14 +13,13 @@ const s3 = new AWS.S3({
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
 const uploadFileToS3 = async (file) => {
-  const fileStream = fs.createReadStream(file.path); // file.path is the temporary path from multer disk storage
+
 
   const uploadParams = {
     Bucket: S3_BUCKET_NAME,
     Key: `uploads/${Date.now()}-${file.originalname}`, // Unique key for the file in S3
-    Body: fileStream,
-    ContentType: file.mimetype,
-    ACL: 'public-read' // Make the uploaded file publicly accessible
+    Body: file.buffer,
+    ContentType: file.mimetype
   };
 
   try {
@@ -33,4 +32,21 @@ const uploadFileToS3 = async (file) => {
   }
 };
 
-module.exports = { uploadFileToS3 };
+const deleteFileFromS3 = async (s3Url) => {
+  try {
+    const key = new URL(s3Url).pathname.substring(1);
+
+    const deleteParams = {
+      Bucket: S3_BUCKET_NAME,
+      Key: key,
+    };
+
+    await s3.deleteObject(deleteParams).promise();
+    console.log('File deleted successfully from S3:', s3Url);
+  } catch (err) {
+    console.error('Error deleting file from S3:', err);
+    // Don't re-throw, as we want to continue and delete the DB records regardless
+  }
+};
+
+module.exports = { uploadFileToS3, deleteFileFromS3 };

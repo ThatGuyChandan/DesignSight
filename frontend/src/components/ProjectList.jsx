@@ -22,6 +22,15 @@ const ProjectList = () => {
     });
   };
 
+  const handleDeleteProject = (projectId, e) => {
+    e.preventDefault(); // Prevent link navigation
+    e.stopPropagation(); // Stop event bubbling
+
+    axios.delete(`${API_URL}/projects/${projectId}`).then(() => {
+      setProjects(projects.filter((p) => p._id !== projectId));
+    });
+  };
+
   return (
     <div className="project-list-container">
       <h2>Projects</h2>
@@ -38,8 +47,13 @@ const ProjectList = () => {
         {projects.map((project) => (
           <li key={project._id} className="project-card">
             <Link to={`/project/${project._id}`}>
-              <h3>{project.name}</h3>
-              <p>Created: {new Date(project.createdAt).toLocaleDateString()}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3>{project.name}</h3>
+                  <p>Created: {new Date(project.createdAt).toLocaleDateString()}</p>
+                </div>
+                <button onClick={(e) => handleDeleteProject(project._id, e)} style={{ cursor: 'pointer' }}>Delete</button>
+              </div>
             </Link>
           </li>
         ))}

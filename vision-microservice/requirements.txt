@@ -1,7 +1,7 @@
-fastapi
-uvicorn
-requests
-huggingface_hub
 transformers
 torch
-timm
+Pillow
+fastapi
+uvicorn
+python-multipart
+requests
